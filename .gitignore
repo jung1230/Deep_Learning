@@ -1,3 +1,4 @@
 *.DS_Store
 *.zip
-HW2/data/cifar-10-batches-py
+*.gz
+cifar-10-batches-py
