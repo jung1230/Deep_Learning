@@ -44,6 +44,10 @@ seed = 100
 random.seed(seed)
 numpy.random.seed(seed)
 
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from ComputationalGraphPrimer import *
 
 cgp = ComputationalGraphPrimer(

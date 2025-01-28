@@ -8,6 +8,9 @@ supplied for the constructor parameter "expressions".  In the expression supplie
 names that being with 'x' are the input variables and the names that begin with the
 other letters of the alphabet are the learnable parameters.
 """
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import random
 import numpy
@@ -17,7 +20,6 @@ random.seed(seed)
 numpy.random.seed(seed)
 
 from ComputationalGraphPrimer import *
-
 cgp = ComputationalGraphPrimer(
                one_neuron_model = True,
                expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
