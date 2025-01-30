@@ -2295,6 +2295,10 @@ class ComputationalGraphPrimer(object):
             training_data_class_0.append( for_class_0 )
             training_data_class_1.append( for_class_1 )
         training_data = {0 : training_data_class_0, 1 : training_data_class_1}
+#          training_data = { 
+#               0: ["for_class_0", "for_class_0", "for_class_0"], 
+#               1: ["for_class_1", "for_class_1", "for_class_1"]
+#           }
         return training_data
 
 
@@ -2348,17 +2352,232 @@ class ComputationalGraphPrimer(object):
             print("\n\n\noutput vals: %s" % str(self.true_output_vals))
 
 #_________________________  End of ComputationalGraphPrimer Class Definition ___________________________
-class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
+# my work
+class SGD_ComputationalGraphPrimer(ComputationalGraphPrimer):
     def __init__(self, *args, **kwargs):
         # initialize the parent class
         super().__init__(*args, **kwargs)
 
+    def run_training_loop_one_neuron_model(self, training_data):
+        self.vals_for_learnable_params = {param: random.uniform(0,1) for param in self.learnable_params}
+        self.bias = random.uniform(0,1)                                                     ## Adding the bias improves class discrimination.
+                                                                                            ##   We initialize it to a random number.
+        class DataLoader:
+            def __init__(self, training_data, batch_size):
+                self.training_data = training_data
+                self.batch_size = batch_size
+                self.class_0_samples = [(item, 0) for item in self.training_data[0]]   ## Associate label 0 with each sample
+                self.class_1_samples = [(item, 1) for item in self.training_data[1]]   ## Associate label 1 with each sample
+
+            def __len__(self):
+                return len(self.training_data[0]) + len(self.training_data[1])
+
+            def _getitem(self):    
+                cointoss = random.choice([0,1])                            ## When a batch is created by getbatch(), we want the
+                                                                           ##   samples to be chosen randomly from the two lists
+                if cointoss == 0:
+                    return random.choice(self.class_0_samples)
+                else:
+                    return random.choice(self.class_1_samples)            
+
+            def getbatch(self):
+                batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
+                maxval = 0.0                                               ## For approximate batch data normalization
+                for _ in range(self.batch_size):
+                    item = self._getitem()
+                    if np.max(item[0]) > maxval: 
+                        maxval = np.max(item[0])
+                    batch_data.append(item[0])
+                    batch_labels.append(item[1])
+                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data
+                batch = [batch_data, batch_labels]
+                return batch                
+
+
+        data_loader = DataLoader(training_data, batch_size=self.batch_size)
+        loss_running_record = []
+        i = 0
+        avg_loss_over_iterations = 0.0                                    ##  Average the loss over iterations for printing out 
+                                                                           ##    every N iterations during the training loop.
+        for i in range(self.training_iterations):
+            data = data_loader.getbatch()
+            data_tuples_in_batch = data[0]
+            class_labels_in_batch = data[1]
+            y_preds, deriv_sigmoids =  self.forward_prop_one_neuron_model(data_tuples_in_batch)     ##  FORWARD PROP of data. Derivatives of Sigmoid saved for backprop
+            loss = sum([(abs(class_labels_in_batch[i] - y_preds[i]))**2 for i in range(len(class_labels_in_batch))])  ##  Find loss
+            avg_loss_over_iterations += loss / float(len(class_labels_in_batch))
+            if i%(self.display_loss_how_often) == 0: 
+                avg_loss_over_iterations /= self.display_loss_how_often
+                loss_running_record.append(avg_loss_over_iterations)
+                print("[iter=%d]  loss = %.4f" %  (i+1, avg_loss_over_iterations))                 ## Display average loss
+                avg_loss_over_iterations = 0.0                                                     ## Re-initialize avg loss
+            y_errors_in_batch = list(map(operator.sub, class_labels_in_batch, y_preds))
+            self.backprop_and_update_params_one_neuron_model(data_tuples_in_batch, y_preds, y_errors_in_batch, deriv_sigmoids)  ## BACKPROP loss
+        # plt.figure()     
+        # plt.plot(loss_running_record) 
+        # plt.show()  
+        return loss_running_record 
+    
+    def run_training_loop_multi_neuron_model(self, training_data):
+
+        class DataLoader:
+            """
+            To understand the logic of the dataloader, it would help if you first understand how 
+            the training dataset is created.  Search for the following function in this file:
+
+                             gen_training_data(self)
+           
+            As you will see in the implementation code for this method, the training dataset
+            consists of a Python dict with two keys, 0 and 1, the former points to a list of 
+            all Class 0 samples and the latter to a list of all Class 1 samples.  In each list,
+            the data samples are drawn from a multi-dimensional Gaussian distribution.  The two
+            classes have different means and variances.  The dimensionality of each data sample
+            is set by the number of nodes in the input layer of the neural network.
+
+            The data loader's job is to construct a batch of samples drawn randomly from the two
+            lists mentioned above.  And it mush also associate the class label with each sample
+            separately.
+            """
+            def __init__(self, training_data, batch_size):
+                self.training_data = training_data
+                self.batch_size = batch_size
+                self.class_0_samples = [(item, 0) for item in self.training_data[0]]    ## Associate label 0 with each sample
+                self.class_1_samples = [(item, 1) for item in self.training_data[1]]    ## Associate label 1 with each sample
+
+            def __len__(self):
+                return len(self.training_data[0]) + len(self.training_data[1])
+
+            def _getitem(self):    
+                cointoss = random.choice([0,1])                            ## When a batch is created by getbatch(), we want the
+                                                                           ##   samples to be chosen randomly from the two lists
+                if cointoss == 0:
+                    return random.choice(self.class_0_samples)
+                else:
+                    return random.choice(self.class_1_samples)            
+
+            def getbatch(self):
+                batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
+                maxval = 0.0                                               ## For approximate batch data normalization
+                for _ in range(self.batch_size):
+                    item = self._getitem()
+                    if np.max(item[0]) > maxval: 
+                        maxval = np.max(item[0])
+                    batch_data.append(item[0])
+                    batch_labels.append(item[1])
+                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data       
+                batch = [batch_data, batch_labels]
+                return batch                
+
+        ##  The training loop must first initialize the learnable parameters.  Remember, these are the 
+        ##  symbolic names in your input expressions for the neural layer that do not begin with the 
+        ##  letter 'x'.  In this case, we are initializing with random numbers from a uniform distribution 
+        ##  over the interval (0,1):
+        self.vals_for_learnable_params = {param: random.uniform(0,1) for param in self.learnable_params}
+        ##  In the same  manner, we must also initialize the biases at each node that aggregates forward
+        ##  propagating data:
+        self.bias =   {i : [random.uniform(0,1) for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        data_loader = DataLoader(training_data, batch_size=self.batch_size)
+        loss_running_record = []
+        i = 0
+        avg_loss_over_iterations = 0.0                                          ##  Average the loss over iterations for printing out 
+                                                                                ##    every N iterations during the training loop.   
+        for i in range(self.training_iterations):
+            data = data_loader.getbatch()
+            data_tuples = data[0]
+            class_labels = data[1]
+            self.forward_prop_multi_neuron_model(data_tuples)                                       ## FORW PROP works by side-effect 
+            predicted_labels_for_batch = self.forw_prop_vals_at_layers[self.num_layers-1]           ## Predictions from FORW PROP
+            y_preds =  [item for sublist in  predicted_labels_for_batch  for item in sublist]       ## Get numeric vals for predictions
+            loss = sum([(abs(class_labels[i] - y_preds[i]))**2 for i in range(len(class_labels))])  ## Calculate loss for batch
+            loss_avg = loss / float(len(class_labels))                                              ## Average the loss over batch
+            avg_loss_over_iterations += loss_avg                                                    ## Add to Average loss over iterations
+            if i%(self.display_loss_how_often) == 0: 
+                avg_loss_over_iterations /= self.display_loss_how_often
+                loss_running_record.append(avg_loss_over_iterations)
+                print("[iter=%d]  loss = %.4f" %  (i+1, avg_loss_over_iterations))                  ## Display avg loss
+                avg_loss_over_iterations = 0.0                                                      ## Re-initialize avg-over-iterations loss
+            y_errors_in_batch = list(map(operator.sub, class_labels, y_preds))
+            self.backprop_and_update_params_multi_neuron_model(y_preds, y_errors_in_batch)
+        # plt.figure()     
+        # plt.plot(loss_running_record) 
+        # plt.show()   
+        return loss_running_record
+
+class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
+    def __init__(self, beta,*args, **kwargs):
+        # initialize the parent class
+        super().__init__(*args, **kwargs)
+
         # initialize the SGD+ parameters
-        self.beta = 0.9
-        # initialize the velocity for each learnable parameter to zero
-        self.velocity = {param : 0.0 for param in self.learnable_params}
+        self.beta = beta
+ 
+        
 
+    def run_training_loop_one_neuron_model(self, training_data):
+        self.vals_for_learnable_params = {param: random.uniform(0,1) for param in self.learnable_params}
 
+        self.bias = random.uniform(0,1)                   
+
+                                      
+        # we need to remember values of learnable parameters and bias, 
+        # ensuring that the accumulated velocity is carried over from previous updates.
+        self.velocity4params = {param: 0.0 for param in self.learnable_params}
+        self.velocity4bias = 0.0
+    
+        class DataLoader:
+            def __init__(self, training_data, batch_size):
+                self.training_data = training_data
+                self.batch_size = batch_size
+                self.class_0_samples = [(item, 0) for item in self.training_data[0]]  
+                self.class_1_samples = [(item, 1) for item in self.training_data[1]]   
+
+            def __len__(self):
+                return len(self.training_data[0]) + len(self.training_data[1])
+
+            def _getitem(self):    
+                cointoss = random.choice([0,1])                           
+                                                                          
+                if cointoss == 0:
+                    return random.choice(self.class_0_samples)
+                else:
+                    return random.choice(self.class_1_samples)            
+
+            def getbatch(self):
+                batch_data,batch_labels = [],[]                          
+                maxval = 0.0                                            
+                for _ in range(self.batch_size):
+                    item = self._getitem()
+                    if np.max(item[0]) > maxval: 
+                        maxval = np.max(item[0])
+                    batch_data.append(item[0])
+                    batch_labels.append(item[1])
+                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data
+                batch = [batch_data, batch_labels]
+                return batch                
+
+        data_loader = DataLoader(training_data, batch_size=self.batch_size)
+        loss_running_record = []
+        i = 0
+        avg_loss_over_iterations = 0.0                                    
+
+        for i in range(self.training_iterations):
+            data = data_loader.getbatch()
+            data_tuples_in_batch = data[0]
+            class_labels_in_batch = data[1]
+            y_preds, deriv_sigmoids =  self.forward_prop_one_neuron_model(data_tuples_in_batch)    
+            loss = sum([(abs(class_labels_in_batch[i] - y_preds[i]))**2 for i in range(len(class_labels_in_batch))]) 
+            avg_loss_over_iterations += loss / float(len(class_labels_in_batch))
+            if i%(self.display_loss_how_often) == 0: 
+                avg_loss_over_iterations /= self.display_loss_how_often
+                loss_running_record.append(avg_loss_over_iterations)
+                print("[iter=%d]  loss = %.4f" %  (i+1, avg_loss_over_iterations))                 
+                avg_loss_over_iterations = 0.0                                                   
+            y_errors_in_batch = list(map(operator.sub, class_labels_in_batch, y_preds))
+            self.backprop_and_update_params_one_neuron_model(data_tuples_in_batch, y_preds, y_errors_in_batch, deriv_sigmoids)  
+        
+        # return lost list for future plotting, and remove code for plotting (borrow from the upper(Prof Kak's) code)
+        return loss_running_record
+    
     def backprop_and_update_params_one_neuron_model(self, data_tuples_in_batch, predictions, y_errors_in_batch, deriv_sigmoids):
         """
         This function implements the equations shown on Slide 61 of my Week 3 presentation in our DL 
@@ -2371,56 +2590,114 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
         param_to_vars_map = {param : var for var, param in input_vars_to_param_map.items()}   ##   the input vars 
         vals_for_learnable_params = self.vals_for_learnable_params
         for i,param in enumerate(self.vals_for_learnable_params):
-            ## For each param, sum the partials from every training data sample in batch
             partial_of_loss_wrt_param = 0.0
             for j in range(self.batch_size):
                 vals_for_input_vars_dict =  dict(zip(input_vars, list(data_tuples_in_batch[j])))
                 partial_of_loss_wrt_param   +=   -  y_errors_in_batch[j] * vals_for_input_vars_dict[param_to_vars_map[param]] * deriv_sigmoids[j]
             partial_of_loss_wrt_param /=  float(self.batch_size)
 
-            # before:
+            # # before:
             # step = self.learning_rate * partial_of_loss_wrt_param 
-            ## Update the learnable parameters
+            # # Update the learnable parameters
             # self.vals_for_learnable_params[param] += step
 
-            # with momentum
-            self.velocity[param] = self.beta * self.velocity[param] + (1 - self.beta) * partial_of_loss_wrt_param
-            step = self.learning_rate * self.velocity[param]
-            self.vals_for_learnable_params[param] += step
+            # add momentum for learnable parameters
+            # vt+1 = βvt +gt
+            # wt+1 = wt −ηvt+1
+            self.velocity4params[param] = self.beta * self.velocity4params[param] + partial_of_loss_wrt_param # vt+1 = βvt +gt
+            step = self.learning_rate * self.velocity4params[param] # ηvt+1
+            self.vals_for_learnable_params[param] -= step # wt+1 = wt −ηvt+1
 
 
         y_error_avg = sum(y_errors_in_batch) / float(self.batch_size)
         deriv_sigmoid_avg = sum(deriv_sigmoids) / float(self.batch_size)
-        self.bias += self.learning_rate * y_error_avg * deriv_sigmoid_avg    ## Update the bias
+
+        # before:
+        # self.bias += self.learning_rate * y_error_avg * deriv_sigmoid_avg    ## Update the bias
+
+        # add momentum for bias
+        # vb t+1 = βvb t +gb t
+        # bt+1 = bt −ηvb t+1
+        self.velocity4bias = self.beta * self.velocity4bias + y_error_avg * deriv_sigmoid_avg # vb t+1 = βvb t +gb t
+        step = self.learning_rate * self.velocity4bias # ηvb t+1
+        self.bias -= step # bt+1 = bt −ηvb t+1
+
+# return lost list for future plotting, and remove code for plotting (borrow from the upper(Prof Kak's) code)
+    def run_training_loop_multi_neuron_model(self, training_data):
+        class DataLoader:
+            def __init__(self, training_data, batch_size):
+                self.training_data = training_data
+                self.batch_size = batch_size
+                self.class_0_samples = [(item, 0) for item in self.training_data[0]]    ## Associate label 0 with each sample
+                self.class_1_samples = [(item, 1) for item in self.training_data[1]]    ## Associate label 1 with each sample
+
+            def __len__(self):
+                return len(self.training_data[0]) + len(self.training_data[1])
+
+            def _getitem(self):    
+                cointoss = random.choice([0,1])                            ## When a batch is created by getbatch(), we want the
+                                                                           ##   samples to be chosen randomly from the two lists
+                if cointoss == 0:
+                    return random.choice(self.class_0_samples)
+                else:
+                    return random.choice(self.class_1_samples)            
+
+            def getbatch(self):
+                batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
+                maxval = 0.0                                               ## For approximate batch data normalization
+                for _ in range(self.batch_size):
+                    item = self._getitem()
+                    if np.max(item[0]) > maxval: 
+                        maxval = np.max(item[0])
+                    batch_data.append(item[0])
+                    batch_labels.append(item[1])
+                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data       
+                batch = [batch_data, batch_labels]
+                return batch                
+
+        self.vals_for_learnable_params = {param: random.uniform(0,1) for param in self.learnable_params}
+        self.bias =   {i : [random.uniform(0,1) for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        
+        # we need to remember values of learnable parameters and bias, 
+        # ensuring that the accumulated velocity is carried over from previous updates.
+        self.velocity4params = {param: 0.0 for param in self.learnable_params}
+        self.velocity4bias = {i : [0.0 for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        
+        
+        data_loader = DataLoader(training_data, batch_size=self.batch_size)
+        loss_running_record = []
+        i = 0
+        avg_loss_over_iterations = 0.0                                          ##  Average the loss over iterations for printing out 
+                                                                                ##    every N iterations during the training loop.   
+        for i in range(self.training_iterations):
+            data = data_loader.getbatch()
+            data_tuples = data[0]
+            class_labels = data[1]
+            self.forward_prop_multi_neuron_model(data_tuples)                                       ## FORW PROP works by side-effect 
+            predicted_labels_for_batch = self.forw_prop_vals_at_layers[self.num_layers-1]           ## Predictions from FORW PROP
+            y_preds =  [item for sublist in  predicted_labels_for_batch  for item in sublist]       ## Get numeric vals for predictions
+            loss = sum([(abs(class_labels[i] - y_preds[i]))**2 for i in range(len(class_labels))])  ## Calculate loss for batch
+            loss_avg = loss / float(len(class_labels))                                              ## Average the loss over batch
+            avg_loss_over_iterations += loss_avg                                                    ## Add to Average loss over iterations
+            if i%(self.display_loss_how_often) == 0: 
+                avg_loss_over_iterations /= self.display_loss_how_often
+                loss_running_record.append(avg_loss_over_iterations)
+                print("[iter=%d]  loss = %.4f" %  (i+1, avg_loss_over_iterations))                  ## Display avg loss
+                avg_loss_over_iterations = 0.0                                                      ## Re-initialize avg-over-iterations loss
+            y_errors_in_batch = list(map(operator.sub, class_labels, y_preds))
+            self.backprop_and_update_params_multi_neuron_model(y_preds, y_errors_in_batch)
+        
+        # return lost list for future plotting, and remove code for plotting (borrow from the upper(Prof Kak's) code)
+        return loss_running_record 
 
 
     def backprop_and_update_params_multi_neuron_model(self, predictions, y_errors):
-        """
-        First note that loop index variable 'back_layer_index' starts with the index of
-        the last layer.  For the 3-layer example shown for 'forward', back_layer_index
-        starts with a value of 2, its next value is 1, and that's it.
-
-        In the code below, the outermost loop is over the data samples in a batch. As shown
-        on Slide 73 of my Week 3 lecture, in order to calculate the partials of Loss with
-        respect to the learnable params, we need to backprop the prediction errors and 
-        the gradients of the Sigmoid.  For the purpose of satisfying the requirements of
-        SGD, the backprop of the prediction errors and the gradients needs to be carried
-        out separately for each training data sample in a batch.  That's what the outer
-        loop is for.
-
-        After we exit the outermost loop, we average over the results obtained from each
-        training data sample in a batch.
-
-        Pay attention to the variable 'vars_in_layer'.  These store the node variables in
-        the current layer during backpropagation.  
-        """
-        ## Eq. (24) on Slide 73 of my Week 3 lecture says we need to store backproped errors in each layer leading up to the last:
         pred_err_backproped_at_layers =   [ {i : [None for j in range( self.layers_config[i] ) ]  
                                                                   for i in range(self.num_layers)} for _ in range(self.batch_size) ]
-        ## This will store "\delta L / \delta w" you see at the LHS of the equations on Slide 73:
         partial_of_loss_wrt_params = {param : 0.0 for param in self.all_params}
-        ## For estimating the changes to the bias to be made on the basis of the derivatives of the Sigmoids:
         bias_changes =   {i : [0.0 for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        
+
         for b in range(self.batch_size):
             pred_err_backproped_at_layers[b][self.num_layers - 1] = [ y_errors[b] ]
             for back_layer_index in reversed(range(1,self.num_layers)):             ## For the 3-layer network, the first val for back_layer_index is 2 for the 3rd layer
@@ -2429,9 +2706,6 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
                 vars_in_layer  =  self.layer_vars[back_layer_index]                 ## A list like ['xo']
                 vars_in_next_layer_back  =  self.layer_vars[back_layer_index - 1]   ## A list like ['xw', 'xz']
                 vals_for_input_vars_dict =  dict(zip(vars_in_next_layer_back, self.forw_prop_vals_at_layers[back_layer_index - 1][b]))   
-                ## For the next statement, note that layer_params are stored in a dict like        
-                ##       {1: [['ap', 'aq', 'ar', 'as'], ['bp', 'bq', 'br', 'bs']], 2: [['cp', 'cq']]}
-                ## "layer_params[idx]" is a list of lists for the link weights in layer whose output nodes are in layer "idx"
                 layer_params = self.layer_params[back_layer_index]         
                 transposed_layer_params = list(zip(*layer_params))                  ## Creating a transpose of the link matrix, See Eq. 30 on Slide 77
                 for k,var1 in enumerate(vars_in_next_layer_back):
@@ -2459,21 +2733,148 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
                         if back_layer_index-1 > 0:
                             bias_changes[back_layer_index-1][k] += pred_err_backproped_at_layers[b][back_layer_index - 1][k] * deriv_sigmoids[b][j] 
  
-        ## Now update the learnable parameters.  The loop shown below carries out SGD mandated averaging
+
+        # Before:
+        # ## Now update the learnable parameters.  The loop shown below carries out SGD mandated averaging
+        # for param in partial_of_loss_wrt_params: 
+        #     partial_of_loss_wrt_param = partial_of_loss_wrt_params[param] /  float(self.batch_size)   
+        #     step = self.learning_rate * partial_of_loss_wrt_param 
+        #     self.vals_for_learnable_params[param] += step
+
+        # ##  Finally we update the biases at all the nodes that aggregate data:      
+        # for layer_index in range(1,self.num_layers):           
+        #     for k in range(self.layers_config[layer_index]):
+        #         self.bias[layer_index][k]  +=  self.learning_rate * ( bias_changes[layer_index][k] / float(self.batch_size) )
+
+
+        # add momentum for learnable parameters
+        # vt+1 = βvt +gt
+        # wt+1 = wt −ηvt+1
         for param in partial_of_loss_wrt_params: 
             partial_of_loss_wrt_param = partial_of_loss_wrt_params[param] /  float(self.batch_size)   
-            step = self.learning_rate * partial_of_loss_wrt_param 
-            self.vals_for_learnable_params[param] += step
-
-        ##  Finally we update the biases at all the nodes that aggregate data:      
+            self.velocity4params[param] = self.beta * self.velocity4params[param] + partial_of_loss_wrt_param # vt+1 = βvt +gt
+            step = self.learning_rate * self.velocity4params[param] # ηvt+1
+            self.vals_for_learnable_params[param] -= step # wt+1 = wt −ηvt+1
         for layer_index in range(1,self.num_layers):           
             for k in range(self.layers_config[layer_index]):
-                self.bias[layer_index][k]  +=  self.learning_rate * ( bias_changes[layer_index][k] / float(self.batch_size) )
+                self.velocity4bias[layer_index][k] = self.beta * self.velocity4bias[layer_index][k] + bias_changes[layer_index][k] / float(self.batch_size)
+                step = self.learning_rate * self.velocity4bias[layer_index][k]
+                self.bias[layer_index][k] -= step
 
+class Adam_ComputationalGraphPrimer(ComputationalGraphPrimer):
+    def __init__(self, beta,*args, **kwargs):
+        # initialize the parent class
+        super().__init__(*args, **kwargs)
 
+        # add something here?
 
+# end my work
 
 #______________________________    Test code follows    _________________________________
 
 if __name__ == '__main__': 
-    pass
+    # cgp = ComputationalGraphPrimer(
+    #            one_neuron_model = True,
+    #            expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
+    #            output_vars = ['xw'],
+    #            dataset_size = 5000,
+    #            learning_rate = 1e-3,
+    #            training_iterations = 40000,
+    #            batch_size = 8,
+    #            display_loss_how_often = 100,
+    #            debug = True,
+    #   )
+    # cgp.parse_expressions()
+
+    # training_data = cgp.gen_training_data()
+
+    # cgp.run_training_loop_one_neuron_model( training_data )
+
+    # plt.figure()  
+
+
+    # cgp = SGD_ComputationalGraphPrimer(
+    #            one_neuron_model = True,
+    #            expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
+    #            output_vars = ['xw'],
+    #            dataset_size = 5000,
+    #            learning_rate = 1e-2,
+    #            training_iterations = 40000,
+    #            batch_size = 8,
+    #            display_loss_how_often = 100,
+    #            debug = True,
+    #   )
+    # cgp.parse_expressions()
+    # training_data = cgp.gen_training_data()
+    # loss_record1 = cgp.run_training_loop_one_neuron_model( training_data )
+    # plt.plot(loss_record1, label="SGD One-layer") 
+
+
+    # cgp = SGDPlus_ComputationalGraphPrimer(
+    #            one_neuron_model = True,
+    #            expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
+    #            output_vars = ['xw'],
+    #            dataset_size = 5000,
+    #            learning_rate = 1e-2,
+    #            training_iterations = 40000,
+    #            batch_size = 8,
+    #            display_loss_how_often = 100,
+    #            debug = True,
+    #            beta = 0.9,
+    #   )
+    # cgp.parse_expressions()
+    # training_data = cgp.gen_training_data()
+    # loss_record2 =cgp.run_training_loop_one_neuron_model( training_data )
+    # plt.plot(loss_record2, label="SGD+ One-layer, beta = 0.9")
+
+
+
+    # plt.legend()
+    # plt.show() 
+
+    plt.figure()  
+    cgp = SGD_ComputationalGraphPrimer(
+                num_layers = 3,
+                layers_config = [4,2,1],                         # num of nodes in each layer
+                expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+                                'xz=bp*xp+bq*xq+br*xr+bs*xs',
+                                'xo=cp*xw+cq*xz'],
+                output_vars = ['xo'],
+                dataset_size = 5000,
+                learning_rate = 1e-1,
+                training_iterations = 40000,
+                batch_size = 8,
+                display_loss_how_often = 100,
+                debug = True,
+        )
+    cgp.parse_multi_layer_expressions()
+    training_data = cgp.gen_training_data()
+    loss_record3 = cgp.run_training_loop_multi_neuron_model( training_data )
+    plt.plot(loss_record3, label="SGD Multi-layer")
+
+
+    cgp = SGDPlus_ComputationalGraphPrimer(
+                num_layers = 3,
+                layers_config = [4,2,1],                         # num of nodes in each layer
+                expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+                                'xz=bp*xp+bq*xq+br*xr+bs*xs',
+                                'xo=cp*xw+cq*xz'],
+                output_vars = ['xo'],
+                dataset_size = 5000,
+                learning_rate = 1e-1,
+                training_iterations = 40000,
+                batch_size = 8,
+                display_loss_how_often = 100,
+                debug = True,
+                beta = 0.9,
+        )
+    cgp.parse_multi_layer_expressions()
+    training_data = cgp.gen_training_data()
+    loss_record4 = cgp.run_training_loop_multi_neuron_model( training_data )
+    plt.plot(loss_record4, label="SGD+ Multi-layer, beta = 0.9")
+
+
+
+    plt.legend()
+    plt.show()   
+

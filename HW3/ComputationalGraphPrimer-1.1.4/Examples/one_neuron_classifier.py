@@ -20,17 +20,30 @@ random.seed(seed)
 numpy.random.seed(seed)
 
 from ComputationalGraphPrimer import *
-cgp = ComputationalGraphPrimer(
-               one_neuron_model = True,
-               expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
-               output_vars = ['xw'],
-               dataset_size = 5000,
-               learning_rate = 1e-3,
-               training_iterations = 40000,
-               batch_size = 8,
-               display_loss_how_often = 100,
-               debug = True,
-      )
+
+# cgp = ComputationalGraphPrimer(
+#                one_neuron_model = True,
+#                expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
+#                output_vars = ['xw'],
+#                dataset_size = 5000,
+#                learning_rate = 1e-3,
+#                training_iterations = 40000,
+#                batch_size = 8,
+#                display_loss_how_often = 100,
+#                debug = True,
+#       )
+
+cgp = SGDPlus_ComputationalGraphPrimer(
+    one_neuron_model=True,
+    expressions=['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
+    output_vars=['xw'],
+    dataset_size=5000,
+    learning_rate=1e-3,
+    training_iterations=40000,
+    batch_size=8,
+    display_loss_how_often=100,
+    debug=True,
+)
 
 
 cgp.parse_expressions()
