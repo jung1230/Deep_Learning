@@ -1094,7 +1094,6 @@ class ComputationalGraphPrimer(object):
             print("\n\nleads_to dictionary: %s" % str(self.leads_to))
 
 
-
     def display_DAG(self):
         """
         The network visualization code in this script should work for any general DAG defined in 
@@ -1269,6 +1268,7 @@ class ComputationalGraphPrimer(object):
         nx.draw(G, with_labels=True, font_weight='bold')
         plt.show()
 
+
     def display_network2(self):
         '''
         Provides a fancier display of the network graph
@@ -1326,6 +1326,18 @@ class ComputationalGraphPrimer(object):
                 self.batch_size = batch_size
                 self.class_0_samples = [(item, 0) for item in self.training_data[0]]   ## Associate label 0 with each sample
                 self.class_1_samples = [(item, 1) for item in self.training_data[1]]   ## Associate label 1 with each sample
+                
+                # Calculate statistics for normalization
+                all_samples = np.vstack([self.training_data[0], self.training_data[1]])
+                self.mean = np.mean(all_samples, axis=0)
+                self.std = np.std(all_samples, axis=0)
+                 # add upper bond and lower bond
+                self.upper = self.mean + 5*self.std
+                self.lower = self.mean - 5*self.std
+                # Add global min and max for stable scaling
+                self.global_min = np.min(all_samples)
+                self.global_max = np.max(all_samples)
+            
 
             def __len__(self):
                 return len(self.training_data[0]) + len(self.training_data[1])
@@ -1337,7 +1349,26 @@ class ComputationalGraphPrimer(object):
                     return random.choice(self.class_0_samples)
                 else:
                     return random.choice(self.class_1_samples)            
+            def truncate_and_rescale(self, sample):
+                data, label = sample
+                truncated = np.clip(data, self.lower, self.upper)
+                # to [-1,1]
+                normalized = 2 * ((truncated - self.mean) / (self.global_max - self.global_min)) - 1
+                return normalized, label
 
+            # def getbatch(self):
+            #     batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
+            #     maxval = 0.0                                               ## For approximate batch data normalization
+            #     for _ in range(self.batch_size):
+            #         item = self._getitem()
+            #         # if np.max(item[0]) > maxval: 
+            #         #     maxval = np.max(item[0])
+            #         normalized_data, label  = self.truncate_and_rescale(item)
+            #         batch_data.append(normalized_data)
+            #         batch_labels.append(label)
+            #     # batch_data = [item/maxval for item in batch_data]          ## Normalize batch data
+            #     batch = [batch_data, batch_labels]
+            #     return batch                
             def getbatch(self):
                 batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
                 maxval = 0.0                                               ## For approximate batch data normalization
@@ -1349,8 +1380,7 @@ class ComputationalGraphPrimer(object):
                     batch_labels.append(item[1])
                 batch_data = [item/maxval for item in batch_data]          ## Normalize batch data
                 batch = [batch_data, batch_labels]
-                return batch                
-
+                return batch   
 
         data_loader = DataLoader(training_data, batch_size=self.batch_size)
         loss_running_record = []
@@ -1469,7 +1499,16 @@ class ComputationalGraphPrimer(object):
                 self.batch_size = batch_size
                 self.class_0_samples = [(item, 0) for item in self.training_data[0]]    ## Associate label 0 with each sample
                 self.class_1_samples = [(item, 1) for item in self.training_data[1]]    ## Associate label 1 with each sample
-
+                # Calculate statistics for normalization
+                all_samples = np.vstack([self.training_data[0], self.training_data[1]])
+                self.mean = np.mean(all_samples, axis=0)
+                self.std = np.std(all_samples, axis=0)
+                 # add upper bond and lower bond
+                self.upper = self.mean + 2*self.std
+                self.lower = self.mean - 2*self.std
+                    # Add global min and max for stable scaling
+                self.global_min = np.min(all_samples)
+                self.global_max = np.max(all_samples)
             def __len__(self):
                 return len(self.training_data[0]) + len(self.training_data[1])
 
@@ -1481,6 +1520,26 @@ class ComputationalGraphPrimer(object):
                 else:
                     return random.choice(self.class_1_samples)            
 
+            def truncate_and_rescale(self, sample):
+                data, label = sample
+                truncated = np.clip(data, self.lower, self.upper)
+                # to [-1,1]
+                normalized = 2 * ((truncated - self.mean) / (self.global_max - self.global_min)) - 1
+                return normalized, label
+
+            # def getbatch(self):
+            #     batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
+            #     # maxval = 0.0                                               ## For approximate batch data normalization
+            #     for _ in range(self.batch_size):
+            #         item = self._getitem()
+            #         # if np.max(item[0]) > maxval: 
+            #         #     maxval = np.max(item[0])
+            #         normalized_data, label  = self.truncate_and_rescale(item)
+            #         batch_data.append(normalized_data)
+            #         batch_labels.append(label)
+            #     # batch_data = [item/maxval for item in batch_data]          ## Normalize batch data
+            #     batch = [batch_data, batch_labels]
+            #     return batch 
             def getbatch(self):
                 batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
                 maxval = 0.0                                               ## For approximate batch data normalization
@@ -1490,9 +1549,9 @@ class ComputationalGraphPrimer(object):
                         maxval = np.max(item[0])
                     batch_data.append(item[0])
                     batch_labels.append(item[1])
-                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data       
+                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data
                 batch = [batch_data, batch_labels]
-                return batch                
+                return batch             
 
         ##  The training loop must first initialize the learnable parameters.  Remember, these are the 
         ##  symbolic names in your input expressions for the neural layer that do not begin with the 
@@ -2352,6 +2411,8 @@ class ComputationalGraphPrimer(object):
             print("\n\n\noutput vals: %s" % str(self.true_output_vals))
 
 #_________________________  End of ComputationalGraphPrimer Class Definition ___________________________
+
+# most of the code is borowed from the parent class, but we need to add some new methods, new feature is labeled with comments
 # my work
 class SGD_ComputationalGraphPrimer(ComputationalGraphPrimer):
     def __init__(self, *args, **kwargs):
@@ -2421,23 +2482,7 @@ class SGD_ComputationalGraphPrimer(ComputationalGraphPrimer):
     def run_training_loop_multi_neuron_model(self, training_data):
 
         class DataLoader:
-            """
-            To understand the logic of the dataloader, it would help if you first understand how 
-            the training dataset is created.  Search for the following function in this file:
-
-                             gen_training_data(self)
-           
-            As you will see in the implementation code for this method, the training dataset
-            consists of a Python dict with two keys, 0 and 1, the former points to a list of 
-            all Class 0 samples and the latter to a list of all Class 1 samples.  In each list,
-            the data samples are drawn from a multi-dimensional Gaussian distribution.  The two
-            classes have different means and variances.  The dimensionality of each data sample
-            is set by the number of nodes in the input layer of the neural network.
-
-            The data loader's job is to construct a batch of samples drawn randomly from the two
-            lists mentioned above.  And it mush also associate the class label with each sample
-            separately.
-            """
+        
             def __init__(self, training_data, batch_size):
                 self.training_data = training_data
                 self.batch_size = batch_size
@@ -2579,11 +2624,6 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
         return loss_running_record
     
     def backprop_and_update_params_one_neuron_model(self, data_tuples_in_batch, predictions, y_errors_in_batch, deriv_sigmoids):
-        """
-        This function implements the equations shown on Slide 61 of my Week 3 presentation in our DL 
-        class at Purdue.  All four parameters defined above are lists of what was either supplied to the
-        forward prop function or calculated by it for each training data sample in a batch.
-        """
         input_vars = self.independent_vars
 
         input_vars_to_param_map = self.var_to_var_param[self.output_vars[0]]                  ## These two statements align the
@@ -2606,7 +2646,7 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
             # wt+1 = wt −ηvt+1
             self.velocity4params[param] = self.beta * self.velocity4params[param] + partial_of_loss_wrt_param # vt+1 = βvt +gt
             step = self.learning_rate * self.velocity4params[param] # ηvt+1
-            self.vals_for_learnable_params[param] -= step # wt+1 = wt −ηvt+1
+            self.vals_for_learnable_params[param] += step # wt+1 = wt −ηvt+1 (why not -=?)
 
 
         y_error_avg = sum(y_errors_in_batch) / float(self.batch_size)
@@ -2620,7 +2660,7 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
         # bt+1 = bt −ηvb t+1
         self.velocity4bias = self.beta * self.velocity4bias + y_error_avg * deriv_sigmoid_avg # vb t+1 = βvb t +gb t
         step = self.learning_rate * self.velocity4bias # ηvb t+1
-        self.bias -= step # bt+1 = bt −ηvb t+1
+        self.bias += step # bt+1 = bt −ηvb t+1
 
 # return lost list for future plotting, and remove code for plotting (borrow from the upper(Prof Kak's) code)
     def run_training_loop_multi_neuron_model(self, training_data):
@@ -2731,7 +2771,7 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
                 for k,var1 in enumerate(vars_in_next_layer_back):
                     for j,var2 in enumerate(vars_in_layer):
                         if back_layer_index-1 > 0:
-                            bias_changes[back_layer_index-1][k] += pred_err_backproped_at_layers[b][back_layer_index - 1][k] * deriv_sigmoids[b][j] 
+                            bias_changes[back_layer_index-1][k] = pred_err_backproped_at_layers[b][back_layer_index - 1][k] * deriv_sigmoids[b][j] 
  
 
         # Before:
@@ -2754,26 +2794,347 @@ class SGDPlus_ComputationalGraphPrimer(ComputationalGraphPrimer):
             partial_of_loss_wrt_param = partial_of_loss_wrt_params[param] /  float(self.batch_size)   
             self.velocity4params[param] = self.beta * self.velocity4params[param] + partial_of_loss_wrt_param # vt+1 = βvt +gt
             step = self.learning_rate * self.velocity4params[param] # ηvt+1
-            self.vals_for_learnable_params[param] -= step # wt+1 = wt −ηvt+1
+            self.vals_for_learnable_params[param] += step # wt+1 = wt −ηvt+1
         for layer_index in range(1,self.num_layers):           
             for k in range(self.layers_config[layer_index]):
                 self.velocity4bias[layer_index][k] = self.beta * self.velocity4bias[layer_index][k] + bias_changes[layer_index][k] / float(self.batch_size)
                 step = self.learning_rate * self.velocity4bias[layer_index][k]
-                self.bias[layer_index][k] -= step
+                self.bias[layer_index][k] += step
 
 class Adam_ComputationalGraphPrimer(ComputationalGraphPrimer):
-    def __init__(self, beta,*args, **kwargs):
+# mt+1 = β1 * mt + (1 - β1) * gradt
+# This computes the first moment estimate (moving average of gradients)
+
+# vt+1 = β2 * vt + (1 - β2) * (gradt)^2
+# This computes the second moment estimate (moving average of squared gradients)
+
+# ˆmt+1 = mt+1 / (1 - β1^t)
+# Bias correction for the first moment estimate
+
+# ˆvt+1 = vt+1 / (1 - β2^t)
+# Bias correction for the second moment estimate
+
+# pt+1 = pt - lr * (ˆmt+1 / (sqrt(ˆvt+1 + ϵ)))
+# Parameter update using the corrected first and second moments
+    def __init__(self, beta1,beta2,*args, **kwargs):
         # initialize the parent class
         super().__init__(*args, **kwargs)
 
-        # add something here?
+        # initialize the ADAM parameters
+        self.beta1 = beta1
+        self.beta2 = beta2
+        
+        self.epsilon = 1e-8 # default value in many implementations (e.g., TensorFlow, PyTorch
+        self.t = 0 # initialize timestep
+        
+
+    def run_training_loop_one_neuron_model(self, training_data):
+        self.vals_for_learnable_params = {param: random.uniform(0,1) for param in self.learnable_params}
+
+        self.bias = random.uniform(0,1)                   
+
+                                      
+        # we need to remember values of learnable parameters and bias, 
+        # ensuring that the accumulated velocity is carried over from previous updates.
+        self.velocity4params = {param: 0.0 for param in self.learnable_params}
+        self.velocity4bias = 0.0
+        # we also need to remember mt of learnable parameters and bias, 
+        self.moment4params = {param: 0.0 for param in self.learnable_params}
+        self.moment4bias = 0.0
+        # initialize timestep
+        self.t = 1 
+
+
+        class DataLoader:
+            def __init__(self, training_data, batch_size):
+                self.training_data = training_data
+                self.batch_size = batch_size
+                self.class_0_samples = [(item, 0) for item in self.training_data[0]]  
+                self.class_1_samples = [(item, 1) for item in self.training_data[1]]   
+
+            def __len__(self):
+                return len(self.training_data[0]) + len(self.training_data[1])
+
+            def _getitem(self):    
+                cointoss = random.choice([0,1])                           
+                                                                          
+                if cointoss == 0:
+                    return random.choice(self.class_0_samples)
+                else:
+                    return random.choice(self.class_1_samples)            
+
+            def getbatch(self):
+                batch_data,batch_labels = [],[]                          
+                maxval = 0.0                                            
+                for _ in range(self.batch_size):
+                    item = self._getitem()
+                    if np.max(item[0]) > maxval: 
+                        maxval = np.max(item[0])
+                    batch_data.append(item[0])
+                    batch_labels.append(item[1])
+                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data
+                batch = [batch_data, batch_labels]
+                return batch                
+
+        data_loader = DataLoader(training_data, batch_size=self.batch_size)
+        loss_running_record = []
+        i = 0
+        avg_loss_over_iterations = 0.0                                    
+
+        for i in range(self.training_iterations):
+            data = data_loader.getbatch()
+            data_tuples_in_batch = data[0]
+            class_labels_in_batch = data[1]
+            y_preds, deriv_sigmoids =  self.forward_prop_one_neuron_model(data_tuples_in_batch)    
+            loss = sum([(abs(class_labels_in_batch[i] - y_preds[i]))**2 for i in range(len(class_labels_in_batch))]) 
+            avg_loss_over_iterations += loss / float(len(class_labels_in_batch))
+            if i%(self.display_loss_how_often) == 0: 
+                avg_loss_over_iterations /= self.display_loss_how_often
+                loss_running_record.append(avg_loss_over_iterations)
+                print("[iter=%d]  loss = %.4f" %  (i+1, avg_loss_over_iterations))                 
+                avg_loss_over_iterations = 0.0                                                   
+            y_errors_in_batch = list(map(operator.sub, class_labels_in_batch, y_preds))
+            self.backprop_and_update_params_one_neuron_model(data_tuples_in_batch, y_preds, y_errors_in_batch, deriv_sigmoids)  
+        
+            # increment timestep
+            self.t += 1 
+        # return lost list for future plotting, and remove code for plotting (borrow from the upper(Prof Kak's) code)
+        return loss_running_record
+    
+    def backprop_and_update_params_one_neuron_model(self, data_tuples_in_batch, predictions, y_errors_in_batch, deriv_sigmoids):
+        input_vars = self.independent_vars
+
+        input_vars_to_param_map = self.var_to_var_param[self.output_vars[0]]                  ## These two statements align the
+        param_to_vars_map = {param : var for var, param in input_vars_to_param_map.items()}   ##   the input vars 
+        vals_for_learnable_params = self.vals_for_learnable_params
+        for i,param in enumerate(self.vals_for_learnable_params):
+            partial_of_loss_wrt_param = 0.0
+            for j in range(self.batch_size):
+                vals_for_input_vars_dict =  dict(zip(input_vars, list(data_tuples_in_batch[j])))
+                partial_of_loss_wrt_param   +=   -  y_errors_in_batch[j] * vals_for_input_vars_dict[param_to_vars_map[param]] * deriv_sigmoids[j]
+            partial_of_loss_wrt_param /=  float(self.batch_size)
+
+            # # before:
+            # step = self.learning_rate * partial_of_loss_wrt_param 
+            # # Update the learnable parameters
+            # self.vals_for_learnable_params[param] += step
+
+            # mt+1 = β1 * mt + (1 - β1) * gradt
+            # vt+1 = β2 * vt + (1 - β2) * (gradt)^2
+            # ˆmt+1 = mt+1 / (1 - β1^t)
+            # ˆvt+1 = vt+1 / (1 - β2^t)
+            # pt+1 = pt - lr * (ˆmt+1 / (sqrt(ˆvt+1 + ϵ)))
+            self.moment4params[param] = self.beta1 * self.moment4params[param] + (1 - self.beta1)*partial_of_loss_wrt_param
+            self.velocity4params[param] = self.beta2 * self.velocity4params[param] + (1 - self.beta2)*partial_of_loss_wrt_param**2
+            moment_hat = self.moment4params[param] / (1 - self.beta1**(self.t))
+            velocity_hat = self.velocity4params[param] / (1 - self.beta2**(self.t))
+            step = self.learning_rate * moment_hat / (np.sqrt(velocity_hat + self.epsilon))
+            self.vals_for_learnable_params[param] += step
+
+        y_error_avg = sum(y_errors_in_batch) / float(self.batch_size)
+        deriv_sigmoid_avg = sum(deriv_sigmoids) / float(self.batch_size)
+
+        # before:
+        # self.bias += self.learning_rate * y_error_avg * deriv_sigmoid_avg    ## Update the bias
+
+        # mt+1 = β1 * mt + (1 - β1) * gradt
+        # vt+1 = β2 * vt + (1 - β2) * (gradt)^2
+        # ˆmt+1 = mt+1 / (1 - β1^t)
+        # ˆvt+1 = vt+1 / (1 - β2^t)
+        # pt+1 = pt - lr * (ˆmt+1 / (sqrt(ˆvt+1 + ϵ)))
+        self.moment4bias = self.beta1 * self.moment4bias + (1 - self.beta1)*y_error_avg
+        self.velocity4bias = self.beta2 * self.velocity4bias + (1 - self.beta2)*y_error_avg**2
+        moment_hat = self.moment4bias / (1 - self.beta1**(self.t))
+        velocity_hat = self.velocity4bias / (1 - self.beta2**(self.t))
+        step = self.learning_rate * moment_hat / (np.sqrt(velocity_hat + self.epsilon))
+        self.bias += step
+
+        
+# return lost list for future plotting, and remove code for plotting (borrow from the upper(Prof Kak's) code)
+    def run_training_loop_multi_neuron_model(self, training_data):
+        class DataLoader:
+            def __init__(self, training_data, batch_size):
+                self.training_data = training_data
+                self.batch_size = batch_size
+                self.class_0_samples = [(item, 0) for item in self.training_data[0]]    ## Associate label 0 with each sample
+                self.class_1_samples = [(item, 1) for item in self.training_data[1]]    ## Associate label 1 with each sample
+
+            def __len__(self):
+                return len(self.training_data[0]) + len(self.training_data[1])
+
+            def _getitem(self):    
+                cointoss = random.choice([0,1])                            ## When a batch is created by getbatch(), we want the
+                                                                           ##   samples to be chosen randomly from the two lists
+                if cointoss == 0:
+                    return random.choice(self.class_0_samples)
+                else:
+                    return random.choice(self.class_1_samples)            
+
+            def getbatch(self):
+                batch_data,batch_labels = [],[]                            ## First list for samples, the second for labels
+                maxval = 0.0                                               ## For approximate batch data normalization
+                for _ in range(self.batch_size):
+                    item = self._getitem()
+                    if np.max(item[0]) > maxval: 
+                        maxval = np.max(item[0])
+                    batch_data.append(item[0])
+                    batch_labels.append(item[1])
+                batch_data = [item/maxval for item in batch_data]          ## Normalize batch data       
+                batch = [batch_data, batch_labels]
+                return batch                
+
+        self.vals_for_learnable_params = {param: random.uniform(0,1) for param in self.learnable_params}
+        self.bias =   {i : [random.uniform(0,1) for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        
+        # we need to remember values of learnable parameters and bias, 
+        # ensuring that the accumulated velocity is carried over from previous updates.
+        self.velocity4params = {param: 0.0 for param in self.learnable_params}
+        self.velocity4bias = {i : [0.0 for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        # we also need to remember mt of learnable parameters and bias, 
+        self.moment4params = {param: 0.0 for param in self.learnable_params}
+        self.moment4bias = {i : [0.0 for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        # initialize timestep
+        self.t = 1 
+
+        
+        
+        data_loader = DataLoader(training_data, batch_size=self.batch_size)
+        loss_running_record = []
+        i = 0
+        avg_loss_over_iterations = 0.0                                          ##  Average the loss over iterations for printing out 
+                                                                                ##    every N iterations during the training loop.   
+        for i in range(self.training_iterations):
+            data = data_loader.getbatch()
+            data_tuples = data[0]
+            class_labels = data[1]
+            self.forward_prop_multi_neuron_model(data_tuples)                                       ## FORW PROP works by side-effect 
+            predicted_labels_for_batch = self.forw_prop_vals_at_layers[self.num_layers-1]           ## Predictions from FORW PROP
+            y_preds =  [item for sublist in  predicted_labels_for_batch  for item in sublist]       ## Get numeric vals for predictions
+            loss = sum([(abs(class_labels[i] - y_preds[i]))**2 for i in range(len(class_labels))])  ## Calculate loss for batch
+            loss_avg = loss / float(len(class_labels))                                              ## Average the loss over batch
+            avg_loss_over_iterations += loss_avg                                                    ## Add to Average loss over iterations
+            if i%(self.display_loss_how_often) == 0: 
+                avg_loss_over_iterations /= self.display_loss_how_often
+                loss_running_record.append(avg_loss_over_iterations)
+                print("[iter=%d]  loss = %.4f" %  (i+1, avg_loss_over_iterations))                  ## Display avg loss
+                avg_loss_over_iterations = 0.0                                                      ## Re-initialize avg-over-iterations loss
+            y_errors_in_batch = list(map(operator.sub, class_labels, y_preds))
+            self.backprop_and_update_params_multi_neuron_model(y_preds, y_errors_in_batch)
+        
+        # increment timestep
+        self.t += 1 
+        # return lost list for future plotting, and remove code for plotting (borrow from the upper(Prof Kak's) code)
+        return loss_running_record 
+
+
+    def backprop_and_update_params_multi_neuron_model(self, predictions, y_errors):
+        pred_err_backproped_at_layers =   [ {i : [None for j in range( self.layers_config[i] ) ]  
+                                                                  for i in range(self.num_layers)} for _ in range(self.batch_size) ]
+        partial_of_loss_wrt_params = {param : 0.0 for param in self.all_params}
+        bias_changes =   {i : [0.0 for j in range( self.layers_config[i] ) ]  for i in range(1, self.num_layers)}
+        
+
+        for b in range(self.batch_size):
+            pred_err_backproped_at_layers[b][self.num_layers - 1] = [ y_errors[b] ]
+            for back_layer_index in reversed(range(1,self.num_layers)):             ## For the 3-layer network, the first val for back_layer_index is 2 for the 3rd layer
+                input_vals = self.forw_prop_vals_at_layers[back_layer_index -1]     ## This is a list of 8 two-element lists  --- since we have two nodes in the 2nd layer
+                deriv_sigmoids =  self.gradient_vals_for_layers[back_layer_index]   ## This is a list eight one-element lists, one for each batch element
+                vars_in_layer  =  self.layer_vars[back_layer_index]                 ## A list like ['xo']
+                vars_in_next_layer_back  =  self.layer_vars[back_layer_index - 1]   ## A list like ['xw', 'xz']
+                vals_for_input_vars_dict =  dict(zip(vars_in_next_layer_back, self.forw_prop_vals_at_layers[back_layer_index - 1][b]))   
+                layer_params = self.layer_params[back_layer_index]         
+                transposed_layer_params = list(zip(*layer_params))                  ## Creating a transpose of the link matrix, See Eq. 30 on Slide 77
+                for k,var1 in enumerate(vars_in_next_layer_back):
+                    for j,var2 in enumerate(vars_in_layer):
+                        pred_err_backproped_at_layers[b][back_layer_index - 1][k] = sum([self.vals_for_learnable_params[transposed_layer_params[k][i]]
+                                                                                       * pred_err_backproped_at_layers[b][back_layer_index][i]
+                                                                                                                  for i in range(len(vars_in_layer))])
+                for j,var in enumerate(vars_in_layer):
+                    layer_params = self.layer_params[back_layer_index][j]           ##  ['cp', 'cq']   for the end layer
+                    input_vars_to_param_map = self.var_to_var_param[var]            ## These two statements align the    {'xw': 'cp', 'xz': 'cq'}
+                    param_to_vars_map = {param : var for var, param in input_vars_to_param_map.items()}   ##   and the input vars   {'cp': 'xw', 'cq': 'xz'}
+
+                    for i,param in enumerate(layer_params):
+                        partial_of_loss_wrt_params[param]   +=   pred_err_backproped_at_layers[b][back_layer_index][j] * \
+                                                                        vals_for_input_vars_dict[param_to_vars_map[param]] * deriv_sigmoids[b][j]
+                for k,var1 in enumerate(vars_in_next_layer_back):
+                    for j,var2 in enumerate(vars_in_layer):
+                        if back_layer_index-1 > 0:
+                            bias_changes[back_layer_index-1][k] = pred_err_backproped_at_layers[b][back_layer_index - 1][k] * deriv_sigmoids[b][j] 
+ 
+
+        # Before:
+        # ## Now update the learnable parameters.  The loop shown below carries out SGD mandated averaging
+        # for param in partial_of_loss_wrt_params: 
+        #     partial_of_loss_wrt_param = partial_of_loss_wrt_params[param] /  float(self.batch_size)   
+        #     step = self.learning_rate * partial_of_loss_wrt_param 
+        #     self.vals_for_learnable_params[param] += step
+
+        # ##  Finally we update the biases at all the nodes that aggregate data:      
+        # for layer_index in range(1,self.num_layers):           
+        #     for k in range(self.layers_config[layer_index]):
+        #         self.bias[layer_index][k]  +=  self.learning_rate * ( bias_changes[layer_index][k] / float(self.batch_size) )
+
+
+        # mt+1 = β1 * mt + (1 - β1) * gradt
+        # vt+1 = β2 * vt + (1 - β2) * (gradt)^2
+        # ˆmt+1 = mt+1 / (1 - β1^t)
+        # ˆvt+1 = vt+1 / (1 - β2^t)
+        # pt+1 = pt - lr * (ˆmt+1 / (sqrt(ˆvt+1 + ϵ)))
+        for param in partial_of_loss_wrt_params: 
+            partial_of_loss_wrt_param = partial_of_loss_wrt_params[param] /  float(self.batch_size)   
+            self.moment4params[param] = self.beta1 * self.moment4params[param] + (1 - self.beta1)*partial_of_loss_wrt_param
+            self.velocity4params[param] = self.beta2 * self.velocity4params[param] + (1 - self.beta2)*partial_of_loss_wrt_param**2
+            moment_hat = self.moment4params[param] / (1 - self.beta1**(self.t))
+            velocity_hat = self.velocity4params[param] / (1 - self.beta2**(self.t))
+            step = self.learning_rate * moment_hat / (np.sqrt(velocity_hat + self.epsilon))
+            self.vals_for_learnable_params[param] += step
+
+        for layer_index in range(1,self.num_layers):           
+            for k in range(self.layers_config[layer_index]):
+                self.moment4bias[layer_index][k] = self.beta1 * self.moment4bias[layer_index][k] + (1 - self.beta1)*bias_changes[layer_index][k] / float(self.batch_size)
+                self.velocity4bias[layer_index][k] = self.beta2 * self.velocity4bias[layer_index][k] + (1 - self.beta2)*bias_changes[layer_index][k]**2 / float(self.batch_size)
+                moment_hat = self.moment4bias[layer_index][k] / (1 - self.beta1**(self.t))
+                velocity_hat = self.velocity4bias[layer_index][k] / (1 - self.beta2**(self.t))
+                step = self.learning_rate * moment_hat / (np.sqrt(velocity_hat + self.epsilon))
+                self.bias[layer_index][k] += step
+
+               
 
 # end my work
 
 #______________________________    Test code follows    _________________________________
 
 if __name__ == '__main__': 
-    # cgp = ComputationalGraphPrimer(
+    import time
+    SEED = 44
+    random.seed(SEED)
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed_all(SEED)  # If using GPU
+
+    plt.figure()
+
+
+
+    cgp = SGD_ComputationalGraphPrimer(
+               one_neuron_model = True,
+               expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
+               output_vars = ['xw'],
+               dataset_size = 5000,
+               learning_rate = 1e-3,
+               training_iterations = 40000,
+               batch_size = 8,
+               display_loss_how_often = 100,
+               debug = True,
+      )
+    cgp.parse_expressions()
+    training_data = cgp.gen_training_data()
+    loss_record1 = cgp.run_training_loop_one_neuron_model( training_data )
+    plt.plot(loss_record1, label="SGD One-layer") 
+
+
+    # cgp = SGDPlus_ComputationalGraphPrimer(
     #            one_neuron_model = True,
     #            expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
     #            output_vars = ['xw'],
@@ -2783,56 +3144,18 @@ if __name__ == '__main__':
     #            batch_size = 8,
     #            display_loss_how_often = 100,
     #            debug = True,
-    #   )
-    # cgp.parse_expressions()
-
-    # training_data = cgp.gen_training_data()
-
-    # cgp.run_training_loop_one_neuron_model( training_data )
-
-    # plt.figure()  
-
-
-    # cgp = SGD_ComputationalGraphPrimer(
-    #            one_neuron_model = True,
-    #            expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
-    #            output_vars = ['xw'],
-    #            dataset_size = 5000,
-    #            learning_rate = 1e-2,
-    #            training_iterations = 40000,
-    #            batch_size = 8,
-    #            display_loss_how_often = 100,
-    #            debug = True,
+    #            beta = 0.99,
     #   )
     # cgp.parse_expressions()
     # training_data = cgp.gen_training_data()
-    # loss_record1 = cgp.run_training_loop_one_neuron_model( training_data )
-    # plt.plot(loss_record1, label="SGD One-layer") 
-
-
-    # cgp = SGDPlus_ComputationalGraphPrimer(
-    #            one_neuron_model = True,
-    #            expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
-    #            output_vars = ['xw'],
-    #            dataset_size = 5000,
-    #            learning_rate = 1e-2,
-    #            training_iterations = 40000,
-    #            batch_size = 8,
-    #            display_loss_how_often = 100,
-    #            debug = True,
-    #            beta = 0.9,
-    #   )
-    # cgp.parse_expressions()
-    # training_data = cgp.gen_training_data()
-    # loss_record2 =cgp.run_training_loop_one_neuron_model( training_data )
-    # plt.plot(loss_record2, label="SGD+ One-layer, beta = 0.9")
+    # loss_record2 =cgp.run_training_loop_one_neuron_model(training_data)
+    # plt.plot(loss_record2, label="SGD+ One-layer, beta = 0.99")
 
 
 
-    # plt.legend()
-    # plt.show() 
 
-    plt.figure()  
+
+
     cgp = SGD_ComputationalGraphPrimer(
                 num_layers = 3,
                 layers_config = [4,2,1],                         # num of nodes in each layer
@@ -2841,7 +3164,7 @@ if __name__ == '__main__':
                                 'xo=cp*xw+cq*xz'],
                 output_vars = ['xo'],
                 dataset_size = 5000,
-                learning_rate = 1e-1,
+                learning_rate = 1e-3,
                 training_iterations = 40000,
                 batch_size = 8,
                 display_loss_how_often = 100,
@@ -2853,7 +3176,47 @@ if __name__ == '__main__':
     plt.plot(loss_record3, label="SGD Multi-layer")
 
 
-    cgp = SGDPlus_ComputationalGraphPrimer(
+    # cgp = SGDPlus_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-3,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta = 0.99,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # loss_record4 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # plt.plot(loss_record4, label="SGD+ Multi-layer, beta = 0.99")
+
+
+
+    cgp = Adam_ComputationalGraphPrimer(
+        one_neuron_model = True,
+        expressions = ['xw=ab*xa+bc*xb+cd*xc+ac*xd'],
+        output_vars = ['xw'],
+        dataset_size = 5000,
+        learning_rate = 1e-3,
+        training_iterations = 40000,
+        batch_size = 8,
+        display_loss_how_often = 100,
+        debug = True,
+        beta1 = 0.99,
+        beta2 = 0.99,
+    )
+    cgp.parse_expressions()
+    training_data = cgp.gen_training_data()
+    loss_record6 =cgp.run_training_loop_one_neuron_model(training_data)
+    plt.plot(loss_record6, label="ADAM Single Layer, beta1 = 0.99, beta2 = 0.99")
+
+    cgp = Adam_ComputationalGraphPrimer(
                 num_layers = 3,
                 layers_config = [4,2,1],                         # num of nodes in each layer
                 expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
@@ -2861,19 +3224,250 @@ if __name__ == '__main__':
                                 'xo=cp*xw+cq*xz'],
                 output_vars = ['xo'],
                 dataset_size = 5000,
-                learning_rate = 1e-1,
+                learning_rate = 1e-3,
                 training_iterations = 40000,
                 batch_size = 8,
                 display_loss_how_often = 100,
                 debug = True,
-                beta = 0.9,
+                beta1 = 0.99,
+                beta2 = 0.99,
         )
     cgp.parse_multi_layer_expressions()
     training_data = cgp.gen_training_data()
-    loss_record4 = cgp.run_training_loop_multi_neuron_model( training_data )
-    plt.plot(loss_record4, label="SGD+ Multi-layer, beta = 0.9")
+    loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.99, beta2 = 0.99")
 
 
+
+# ------ hyperparameter tuning ------ ------ hyperparameter tuning ------ ------ hyperparameter tuning ------ ------ hyperparameter tuning ------
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.8,
+    #             beta2 = 0.8,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.8, beta2 = 0.8, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.8,
+    #             beta2 = 0.9,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.8, beta2 = 0.9, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.8,
+    #             beta2 = 0.99,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.8, beta2 = 0.99, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.9,
+    #             beta2 = 0.8,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.9, beta2 = 0.8, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.9,
+    #             beta2 = 0.9,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.9, beta2 = 0.9, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.9,
+    #             beta2 = 0.99,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.9, beta2 = 0.99, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.99,
+    #             beta2 = 0.8,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.99, beta2 = 0.8, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.99,
+    #             beta2 = 0.9,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.99, beta2 = 0.9, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+
+
+    # cgp = Adam_ComputationalGraphPrimer(
+    #             num_layers = 3,
+    #             layers_config = [4,2,1],                         # num of nodes in each layer
+    #             expressions = ['xw=ap*xp+aq*xq+ar*xr+as*xs',
+    #                             'xz=bp*xp+bq*xq+br*xr+bs*xs',
+    #                             'xo=cp*xw+cq*xz'],
+    #             output_vars = ['xo'],
+    #             dataset_size = 5000,
+    #             learning_rate = 1e-5,
+    #             training_iterations = 40000,
+    #             batch_size = 8,
+    #             display_loss_how_often = 100,
+    #             debug = True,
+    #             beta1 = 0.99,
+    #             beta2 = 0.99,
+    #     )
+    # cgp.parse_multi_layer_expressions()
+    # training_data = cgp.gen_training_data()
+    # start_time = time.time()
+    # loss_record7 = cgp.run_training_loop_multi_neuron_model( training_data )
+    # end_time = time.time()
+    # total_time = end_time - start_time
+    # plt.plot(loss_record7, label="ADAM Multi Layer, beta1 = 0.99, beta2 = 0.99, total_time = %.2f, final loss = %.2f, min loss = %.4f" %(total_time, loss_record7[-1], min(loss_record7[5:])))
+# ------ hyperparameter tuning ------ ------ hyperparameter tuning ------ ------ hyperparameter tuning ------ ------ hyperparameter tuning ------
 
     plt.legend()
     plt.show()   
