@@ -60,8 +60,8 @@ if __name__ == "__main__":
     #exp_cifar.load_cifar_10_dataset_with_augmentation()
     exp_cifar.load_cifar_10_dataset()
 
-    # model = exp_cifar.Net()
-    model = exp_cifar.Net2()            ## <<< Try this also but first comment out 
+    model = exp_cifar.Net()
+    # model = exp_cifar.Net2()            ## <<< Try this also but first comment out 
                                         ##     the above line.
 
     ## display network properties
