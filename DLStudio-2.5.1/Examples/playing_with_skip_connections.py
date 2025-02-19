@@ -32,36 +32,43 @@ os.environ['PYTHONHASHSEED'] = str(seed)
 
 ##  watch -d -n 0.5 nvidia-smi
 
-from DLStudio import *
+if __name__ == "__main__":
+## Add DLStudio-2.5.1 to sys.path so Python can find DLStudio
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    print("\n\ncurrent_dir = %s" % current_dir)
+    parent_dir = os.path.dirname(current_dir)
+    sys.path.append(parent_dir)
 
-dls = DLStudio(
-#                  dataroot = "/home/kak/ImageDatasets/CIFAR-10/",
-                  dataroot = "./data/CIFAR-10/",
-                  image_size = [32,32],
-                  path_saved_model = "./saved_model",
-                  momentum = 0.9,
-                  learning_rate = 1e-4,
-                  epochs = 6,
-                  batch_size = 4,
-                  classes = ('plane','car','bird','cat','deer','dog','frog','horse','ship','truck'),
-                  use_gpu = True,
-              )
+    from DLStudio import *
 
-bme_net = dls.BMEnet(dls, skip_connections=True, depth=8)         ## if you want to use skips
-#bme_net = skip_con.BMEnet(skip_connections=False, depth=8)         ## if you don't want to use skips
+    dls = DLStudio(
+    #                  dataroot = "/home/kak/ImageDatasets/CIFAR-10/",
+                    dataroot = "./../../data/CIFAR-10/",
+                    image_size = [32,32],
+                    path_saved_model = "./saved_model",
+                    momentum = 0.9,
+                    learning_rate = 1e-4,
+                    epochs = 6,
+                    batch_size = 4,
+                    classes = ('plane','car','bird','cat','deer','dog','frog','horse','ship','truck'),
+                    use_gpu = True,
+                )
 
-bme_net.load_cifar_10_dataset()
+    bme_net = dls.BMEnet(dls, skip_connections=True, depth=8)         ## if you want to use skips
+    #bme_net = skip_con.BMEnet(skip_connections=False, depth=8)         ## if you don't want to use skips
 
-## display network properties
-number_of_learnable_params = sum(p.numel() for p in bme_net.parameters() if p.requires_grad)
-print("\n\nThe number of learnable parameters in the model: %d" % number_of_learnable_params)
+    bme_net.load_cifar_10_dataset()
 
-## training and testing
-bme_net.run_code_for_training(bme_net, display_images=False)
+    ## display network properties
+    number_of_learnable_params = sum(p.numel() for p in bme_net.parameters() if p.requires_grad)
+    print("\n\nThe number of learnable parameters in the model: %d" % number_of_learnable_params)
 
-#import pymsgbox      
-#response = pymsgbox.confirm("Finished training.  Start testing on unseen data?") 
-#if response == "OK":   
+    ## training and testing
+    bme_net.run_code_for_training(bme_net, display_images=False)
 
-bme_net.run_code_for_testing(bme_net, display_images=False)
+    #import pymsgbox      
+    #response = pymsgbox.confirm("Finished training.  Start testing on unseen data?") 
+    #if response == "OK":   
+
+    bme_net.run_code_for_testing(bme_net, display_images=False)
 
