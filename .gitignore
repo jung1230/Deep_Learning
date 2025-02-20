@@ -2,6 +2,7 @@
 *.zip
 *.gz
 *.pyc
+*.vscode
 HW4/annotations/
 HW4/train2014/
 cifar-10-batches-py
