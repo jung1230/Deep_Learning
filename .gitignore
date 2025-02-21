@@ -8,3 +8,4 @@ HW4/train2014/
 cifar-10-batches-py
 HW4/output_datasets/
 __pycache__
+saved_model
