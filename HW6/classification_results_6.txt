@@ -1,50 +1,50 @@
 
 
-Prediction accuracy for plane : 78 %
+Prediction accuracy for plane :  0 %
 
 
-Prediction accuracy for   car : 93 %
+Prediction accuracy for   car :  0 %
 
 
-Prediction accuracy for  bird : 73 %
+Prediction accuracy for  bird :  0 %
 
 
-Prediction accuracy for   cat : 67 %
+Prediction accuracy for   cat :  0 %
 
 
-Prediction accuracy for  deer : 71 %
+Prediction accuracy for  deer :  0 %
 
 
-Prediction accuracy for   dog : 68 %
+Prediction accuracy for   dog :  0 %
 
 
-Prediction accuracy for  frog : 86 %
+Prediction accuracy for  frog :  0 %
 
 
-Prediction accuracy for horse : 82 %
+Prediction accuracy for horse : 100 %
 
 
-Prediction accuracy for  ship : 87 %
+Prediction accuracy for  ship :  0 %
 
 
-Prediction accuracy for truck : 84 %
+Prediction accuracy for truck :  0 %
 
 
 
-Overall accuracy of the network on the 10000 test images: 79 %
+Overall accuracy of the network on the 10000 test images: 10 %
 
 
 Displaying the confusion matrix:
 
            plane    car   bird    cat   deer    dog   frog  horse   ship  truck
 
- plane:    78.10   1.60   7.50   2.30   0.70   0.50   1.20   0.50   4.60   3.00
-   car:     0.30  93.20   0.10   0.60   0.00   0.10   1.00   0.10   1.40   3.20
-  bird:     3.60   0.60  73.90   6.20   4.40   4.20   3.90   1.30   1.00   0.90
-   cat:     1.00   0.70   6.10  67.60   3.10  12.00   5.40   2.30   1.20   0.60
-  deer:     1.30   0.60   8.10   6.80  71.30   2.30   4.80   4.40   0.40   0.00
-   dog:     0.90   0.20   4.00  18.70   1.50  68.20   2.20   3.50   0.40   0.40
-  frog:     0.40   0.60   3.70   5.70   1.20   1.00  86.70   0.10   0.40   0.20
- horse:     1.40   0.10   2.60   5.20   2.80   3.60   0.60  82.60   0.20   0.90
-  ship:     3.50   3.40   1.30   1.10   0.30   0.50   0.70   0.10  87.50   1.60
- truck:     2.00   7.30   0.80   2.10   0.30   0.40   0.60   0.80   1.50  84.20
+ plane:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+   car:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+  bird:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+   cat:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+  deer:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+   dog:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+  frog:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+ horse:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+  ship:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00
+ truck:     0.00   0.00   0.00   0.00   0.00   0.00   0.00 100.00   0.00   0.00

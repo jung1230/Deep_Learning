@@ -5,7 +5,10 @@
 *.vscode
 HW4/annotations/
 HW4/train2014/
+HW6/annotations/
+HW6/train2014/
 cifar-10-batches-py
 HW4/output_datasets/
+HW6/output_datasets/
 __pycache__
 saved_model
