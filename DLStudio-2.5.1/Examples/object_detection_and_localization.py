@@ -37,53 +37,59 @@ torch.backends.cudnn.deterministic=True
 torch.backends.cudnn.benchmarks=False
 os.environ['PYTHONHASHSEED'] = str(seed)
 """
+if __name__ == "__main__":
+
+    ## Add DLStudio-2.5.1 to sys.path so Python can find DLStudio
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    print("\n\ncurrent_dir = %s" % current_dir)
+    parent_dir = os.path.dirname(current_dir)
+    sys.path.append(parent_dir)
+
+    ##  watch -d -n 0.5 nvidia-smi
+
+    from DLStudio import *
+
+    dls = DLStudio(
+    #                  dataroot = "/home/kak/ImageDatasets/PurdueShapes5/",
+                    dataroot = "./../../data/datasets_for_DLStudio/data/",
+                    image_size = [32,32],
+                    path_saved_model = "./saved_model",
+                    momentum = 0.9,
+                    learning_rate = 1e-4,
+                    epochs = 2,
+                    batch_size = 4,
+                    classes = ('rectangle','triangle','disk','oval','star'),
+                    use_gpu = True,
+                )
 
 
-##  watch -d -n 0.5 nvidia-smi
+    detector = DLStudio.DetectAndLocalize( dl_studio = dls )
 
-from DLStudio import *
+    dataserver_train = DLStudio.DetectAndLocalize.PurdueShapes5Dataset(
+                                    train_or_test = 'train',
+                                    dl_studio = dls,
+                                    dataset_file = "PurdueShapes5-10000-train.gz", 
+                                                                        )
+    dataserver_test = DLStudio.DetectAndLocalize.PurdueShapes5Dataset(
+                                    train_or_test = 'test',
+                                    dl_studio = dls,
+                                    dataset_file = "PurdueShapes5-1000-test.gz"
+                                                                    )
+    detector.dataserver_train = dataserver_train
+    detector.dataserver_test = dataserver_test
 
-dls = DLStudio(
-#                  dataroot = "/home/kak/ImageDatasets/PurdueShapes5/",
-                  dataroot = "./data/PurdueShapes5/",
-                  image_size = [32,32],
-                  path_saved_model = "./saved_model",
-                  momentum = 0.9,
-                  learning_rate = 1e-4,
-                  epochs = 2,
-                  batch_size = 4,
-                  classes = ('rectangle','triangle','disk','oval','star'),
-                  use_gpu = True,
-              )
+    detector.load_PurdueShapes5_dataset(dataserver_train, dataserver_test)
 
+    model = detector.LOADnet2(skip_connections=True, depth=8)
 
-detector = DLStudio.DetectAndLocalize( dl_studio = dls )
+    number_of_learnable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print("\n\nThe number of learnable parameters in the model: %d" % number_of_learnable_params)
 
-dataserver_train = DLStudio.DetectAndLocalize.PurdueShapes5Dataset(
-                                   train_or_test = 'train',
-                                   dl_studio = dls,
-                                   dataset_file = "PurdueShapes5-10000-train.gz", 
-                                                                      )
-dataserver_test = DLStudio.DetectAndLocalize.PurdueShapes5Dataset(
-                                   train_or_test = 'test',
-                                   dl_studio = dls,
-                                   dataset_file = "PurdueShapes5-1000-test.gz"
-                                                                  )
-detector.dataserver_train = dataserver_train
-detector.dataserver_test = dataserver_test
+    detector.run_code_for_training_with_CrossEntropy_and_MSE_Losses(model, show_images=True)
 
-detector.load_PurdueShapes5_dataset(dataserver_train, dataserver_test)
+    #import pymsgbox
+    #response = pymsgbox.confirm("Finished training.  Start testing on unseen data?")
+    #if response == "OK": 
 
-model = detector.LOADnet2(skip_connections=True, depth=8)
-
-number_of_learnable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-print("\n\nThe number of learnable parameters in the model: %d" % number_of_learnable_params)
-
-detector.run_code_for_training_with_CrossEntropy_and_MSE_Losses(model, show_images=True)
-
-#import pymsgbox
-#response = pymsgbox.confirm("Finished training.  Start testing on unseen data?")
-#if response == "OK": 
-
-detector.run_code_for_testing_detection_and_localization(model)
+    detector.run_code_for_testing_detection_and_localization(model)
 

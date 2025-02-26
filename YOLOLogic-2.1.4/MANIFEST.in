@@ -1,0 +1,41 @@
+include MANIFEST.in
+include YOLOLogic/YOLOLogic.py
+include YOLOLogic/__init__.py
+include setup.py
+include Makefile
+include README
+include YOLOLogic-2.1.4.html
+include TestYOLOLogic/YOLOLogic.py
+include TestYOLOLogic/TestImageLoadingAndDataExtraction.py
+include TestYOLOLogic/TestImageConversion.py
+include TestYOLOLogic/Test.py
+include TestYOLOLogic/halfsun.jpg
+include Examples/README
+include Examples/single_instance_object_detection.py
+include Examples/multi_instance_object_detection.py
+include ExamplesRegionProposals/README
+include ExamplesRegionProposals/torchvision_some_basic_transformations.py
+include ExamplesRegionProposals/torchvision_based_image_processing.py
+include ExamplesRegionProposals/interactive_graph_based_segmentation.py
+include ExamplesRegionProposals/selective_search.py
+include ExamplesRegionProposals/images/polkadots.jpg
+include ExamplesRegionProposals/images/mondrian.jpg
+include ExamplesRegionProposals/images/wallpic2.jpg
+include ExamplesRegionProposals/images/rect_with_4_colors.jpg
+include ExamplesRegionProposals/images/tulip0036.jpg
+include ExamplesRegionProposals/images/disk.jpg
+include ExamplesRegionProposals/images/london6.jpg
+include ExamplesRegionProposals/mondrian/selective_search.py
+include ExamplesRegionProposals/mondrian/mondrian.jpg
+include ExamplesRegionProposals/mondrian/README
+include ExamplesRegionProposals/color_blobs/selective_search.py
+include ExamplesRegionProposals/color_blobs/color_blobs.jpg
+include ExamplesRegionProposals/wallpic2/selective_search.py
+include ExamplesRegionProposals/wallpic2/wallpic2.jpg
+
+
+
+
+
+
+
