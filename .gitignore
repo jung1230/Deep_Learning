@@ -12,6 +12,6 @@ HW4/output_datasets/
 HW6/output_datasets/
 __pycache__
 saved_model
-
+HW7/val2014/
 !output_datasets.zip
 !datasets_for_DLStudio.tar.gz
