@@ -3,6 +3,7 @@
 *.gz
 *.pyc
 *.vscode
+data/*
 HW4/annotations/
 HW4/train2014/
 HW6/annotations/
@@ -15,3 +16,4 @@ saved_model
 HW7/val2014/
 !output_datasets.zip
 !datasets_for_DLStudio.tar.gz
+!data/Multi-instance_images_from_COCO(HW7).zip
