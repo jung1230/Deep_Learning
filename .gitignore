@@ -23,3 +23,10 @@ HW7/val2014/
 # !data/annotations(HW8).zip
 # !data/annotations(HW7).zip
 # !data/annotations_trainval2014(Original).zip
+HW8/saved_model_DICE
+HW8/saved_model_DICE_COCO
+HW8/saved_model_DICE_MSE_50
+HW8/saved_model_DICE_MSE_150
+HW8/saved_model_DICE_MSE_COCO
+HW8/saved_model_MSE
+HW8/saved_model_MSE_COCO
