@@ -5,6 +5,7 @@
 *.pth
 *.vscode
 *.pt
+*.npz
 data/*
 HW4/annotations/
 HW4/train2014/
@@ -31,3 +32,4 @@ HW8/saved_model_DICE_MSE_COCO
 HW8/saved_model_MSE
 HW8/saved_model_MSE_COCO
 HW9/Supplementary
+HW9/Generator_Output
