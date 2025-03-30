@@ -19,4 +19,8 @@ A: The forward q-chain adds noise step-by-step, while the reverse p-chain learns
 A: Because it turns a complex data distribution into a simple, tractable one, enabling the model to learn in small, manageable steps.
 
 ### 2025/03/29
+Started coding; stopped at Section 3.
+
+### 2025/03/30
+Finished the homework and submitted it.
 
