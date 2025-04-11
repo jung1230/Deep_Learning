@@ -49,6 +49,17 @@
 
 """
 
+
+import os, sys
+current_dir = os.getcwd()
+print("current_dir = %s" % current_dir)
+
+DLStudio_dir = os.path.join(current_dir, "..")
+sys.path.append(DLStudio_dir)
+from DLStudio import *
+from Transformers import *
+
+
 import random
 import numpy
 import torch
@@ -69,12 +80,12 @@ os.environ['PYTHONHASHSEED'] = str(seed)
 from DLStudio import *
 from Transformers import *
 
-dataroot = "./data/"
+dataroot = "./../../data/DataForXformer/"
 #dataroot = "/home/kak/TextDatasets/en_es_corpus_xformer/"
 #dataroot = "/mnt/cloudNAS3/Avi/TextDatasets/en_es_corpus_xformer/"
 
-data_archive =  "en_es_xformer_8_10000.tar.gz"                     ## for debugging only
-#data_archive =  "en_es_xformer_8_90000.tar.gz"
+# data_archive =  "en_es_xformer_8_10000.tar.gz"                     ## for debugging only
+data_archive =  "en_es_xformer_8_90000.tar.gz"
 
 
 max_seq_length = 10
