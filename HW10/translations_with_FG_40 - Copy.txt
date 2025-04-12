@@ -1,0 +1,81 @@
+
+
+
+The input sentence pair: ['sri lanka is a beautiful island']    ['sri lanka es una hermosa isla']
+The translation produced by TransformerFG:  sri lanka es una hermosa isla
+
+
+The input sentence pair: ['do you travel a lot']    ['viajáis mucho']
+The translation produced by TransformerFG:  viajáis mucho
+
+
+The input sentence pair: ['i forgot i owed you money']    ['olvidé que te debía dinero']
+The translation produced by TransformerFG:  se te te debía debía
+
+
+The input sentence pair: ['i guess it is true']    ['supongo que es verdad']
+The translation produced by TransformerFG:  supongo que es verdad
+
+
+The input sentence pair: ['i meet a lot of people']    ['conozco a mucha gente']
+The translation produced by TransformerFG:  conozco a mucha gente
+
+
+The input sentence pair: ['i can ride a horse']    ['puedo montar un caballo']
+The translation produced by TransformerFG:  puedo montar un caballo
+
+
+The input sentence pair: ['i am painting an easter egg']    ['estoy pintando un huevo de pascua']
+The translation produced by TransformerFG:  estoy pintando un huevo de pascua
+
+
+The input sentence pair: ['i doubt that tom is happy']    ['dudo que tom esté feliz']
+The translation produced by TransformerFG:  dudo que tom esté feliz
+
+
+The input sentence pair: ['i have become accustomed to the heat']    ['me he acostumbrado al calor']
+The translation produced by TransformerFG:  me he acostumbrado al calor
+
+
+The input sentence pair: ['have you seen my wife']    ['viste a mi mujer']
+The translation produced by TransformerFG:  viste a mujer mujer
+
+
+The input sentence pair: ['tom put these gloves on']    ['tom ponte estos guantes']
+The translation produced by TransformerFG:  tom ponte estos guantes
+
+
+The input sentence pair: ['i need my glasses']    ['necesito mis gafas']
+The translation produced by TransformerFG:  necesito mis gafas
+
+
+The input sentence pair: ['i have not been able to sleep well']    ['no he podido dormir bien']
+The translation produced by TransformerFG:  no he podido dormir
+
+
+The input sentence pair: ['why is this room locked']    ['por qué está con llave esta habitación']
+The translation produced by TransformerFG:  por qué está con con esta habitación
+
+
+The input sentence pair: ['no one lives in this building']    ['nadie vive en este edificio']
+The translation produced by TransformerFG:  nadie vive en este edificio
+
+
+The input sentence pair: ['he was underwater for three minutes']    ['él estuvo tres minutos bajo el agua']
+The translation produced by TransformerFG:  él estuvo tres minutos el agua agua
+
+
+The input sentence pair: ['you are so stuck up']    ['sois tan engreídas']
+The translation produced by TransformerFG:  sois tan engreídas
+
+
+The input sentence pair: ['you were busy last week']    ['la semana pasada estuviste ocupado']
+The translation produced by TransformerFG:  estás semana pasada estuviste ocupado
+
+
+The input sentence pair: ['the toilet will not stop running']    ['la cisterna no para de soltar agua']
+The translation produced by TransformerFG:  la cisterna no para de soltar agua
+
+
+The input sentence pair: ['i have never played tennis with tom']    ['nunca he jugado al tenis con tom']
+The translation produced by TransformerFG:  nunca he jugado al tenis con con

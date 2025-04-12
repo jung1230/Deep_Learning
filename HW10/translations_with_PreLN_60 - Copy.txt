@@ -1,0 +1,81 @@
+
+
+
+The input sentence pair: ['there was silence for a moment']    ['hubo silencio por un momento']
+The translation produced by TransformerPreLN:  había
+
+
+The input sentence pair: ['tom ducked for cover']    ['tom se puso a cubierto']
+The translation produced by TransformerPreLN:  tom
+
+
+The input sentence pair: ['i would like to speak with you alone']    ['me gustaría hablar a solas contigo']
+The translation produced by TransformerPreLN:  me
+
+
+The input sentence pair: ['the children played outside until dark']    ['los niños jugaron afuera hasta que se oscureció']
+The translation produced by TransformerPreLN:  el
+
+
+The input sentence pair: ['he is liked by everybody']    ['él es querido por todos']
+The translation produced by TransformerPreLN:  él
+
+
+The input sentence pair: ['i passed the exam and so did tom']    ['yo aprobé el examen y tom también']
+The translation produced by TransformerPreLN:  yo
+
+
+The input sentence pair: ['she argues just for the sake of arguing']    ['discute sólo por el gusto de discutir']
+The translation produced by TransformerPreLN:  ella
+
+
+The input sentence pair: ['are you happy with how you look']    ['estás feliz con tu apariencia']
+The translation produced by TransformerPreLN:  estás
+
+
+The input sentence pair: ['who taught you how to sail']    ['quién les enseñó a ustedes a navegar']
+The translation produced by TransformerPreLN:  quién
+
+
+The input sentence pair: ['she spilled her drink all over my dress']    ['ella derramó su bebida en todo mi vestido']
+The translation produced by TransformerPreLN:  ella
+
+
+The input sentence pair: ['the medicine worked marvels']    ['la medicina hizo maravillas']
+The translation produced by TransformerPreLN:  la
+
+
+The input sentence pair: ['she was not able to meet him']    ['ella no pudo juntarse con él']
+The translation produced by TransformerPreLN:  ella
+
+
+The input sentence pair: ['the spy burned the papers']    ['el espía quemó los documentos']
+The translation produced by TransformerPreLN:  el
+
+
+The input sentence pair: ['is it made of iron']    ['está hecho de hierro']
+The translation produced by TransformerPreLN:  es
+
+
+The input sentence pair: ['it is time to decide']    ['es hora de decidir']
+The translation produced by TransformerPreLN:  es
+
+
+The input sentence pair: ['she hit upon a good idea']    ['ella dio con una buena idea']
+The translation produced by TransformerPreLN:  ella
+
+
+The input sentence pair: ['he likes baseball very much']    ['a él le gusta mucho el béisbol']
+The translation produced by TransformerPreLN:  él
+
+
+The input sentence pair: ['get her out of here']    ['sácala de aquí']
+The translation produced by TransformerPreLN:  su
+
+
+The input sentence pair: ['my dream is to study french in paris']    ['mi sueño es estudiar francés en parís']
+The translation produced by TransformerPreLN:  mi
+
+
+The input sentence pair: ['the boy ran away when he saw me']    ['el chico se fue corriendo cuando me vio']
+The translation produced by TransformerPreLN:  el
